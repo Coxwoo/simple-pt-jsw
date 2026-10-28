@@ -18,6 +18,7 @@
     panels          그림 1–3 칸 (칸마다 이름표·그림·캡션) + 빨간 줄            F
     figure_bullets  왼쪽 그림 + 오른쪽 불릿 3–5 개 + 빨간 줄                   A
     cards           카드 2–3 개 (소제목 + 불릿) + 빨간 줄                      E·G
+    equation        회색 수식 박스 (식 + where 한 문장) + 아래 그림·카드        B
     table           표 + 빨간 줄                                               C
     summary         얇은 선 아래 3 단 열 + 회색 마무리 문장                    H
     appendix_index  Appendix 첫 장 — 질문 | Appendix | 장 (장 번호는 save 때 채운다)
@@ -233,6 +234,21 @@ def _image_size(path):
         raise FileNotFoundError(f"그림이 없다: {path}")
     with Image.open(path) as im:
         return im.size
+
+
+def _equation_png(eq):
+    """식 그림 — PNG 경로면 그대로, LaTeX 글이면 tools/equations.py 로 임시 폴더에 만든다."""
+    if isinstance(eq, (str, Path)) and str(eq).lower().endswith(".png"):
+        if not Path(eq).is_file():
+            raise FileNotFoundError(f"식 그림이 없다: {eq}")
+        return Path(eq)
+    import hashlib
+    import sys
+    import tempfile
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from equations import render
+    name = hashlib.sha1(repr(eq).encode("utf-8")).hexdigest()[:12]
+    return render(eq, Path(tempfile.gettempdir()) / "simple_pt_eq" / name)
 
 
 def _picture(slide, path, x, y, w, h, alt=""):
@@ -463,11 +479,10 @@ class Deck:
                  gap_after=16)
         self._finish(s, notes)
 
-    def cards(self, title, subtitle="", cards=(), key="", notes=""):
-        """카드 2–3 개 — cards: [{"title": 영어 소제목, "body": [불릿, …]}]. 카드 높이는 가장 긴 카드에 맞춘다."""
-        s, top, bottom = self._start(title, subtitle, key)
+    def _cards_row(self, s, x, y, w, max_h, cards, page):
+        """카드를 (x, y) 부터 폭 w 에 나란히 — 높이는 가장 긴 카드에 맞추고 max_h 를 넘지 않는다."""
         n, gap, pad = len(cards), 32, 36
-        cw = (CW - gap * (n - 1)) / max(n, 1)
+        cw = (w - gap * (n - 1)) / max(n, 1)
         inner = cw - 2 * pad
         th = SIZE["card_title"] * LINE["card"]
 
@@ -477,16 +492,65 @@ class Deck:
             return lines * SIZE["card_body"] * LINE["card"] + 10 * max(len(body) - 1, 0)
 
         hgt = 2 * pad + th + 12 + max(body_h(c) for c in cards)
-        if hgt > bottom - top:
-            self._warn(self._page[s.slide_id], "카드 글이 칸을 넘음 — 줄이거나 노트로")
-            hgt = bottom - top
+        if hgt > max_h:
+            self._warn(page, "카드 글이 칸을 넘음 — 줄이거나 노트로")
+            hgt = max_h
         for i, card in enumerate(cards):
-            x = MX + i * (cw + gap)
-            _rect(s, x, top, cw, hgt, CARD_FILL, CARD_LINE, radius=8)
-            _textbox(s, x + pad, top + pad, inner, th, card["title"], SIZE["card_title"], INK, bold=True,
+            cx = x + i * (cw + gap)
+            _rect(s, cx, y, cw, hgt, CARD_FILL, CARD_LINE, radius=8)
+            _textbox(s, cx + pad, y + pad, inner, th, card["title"], SIZE["card_title"], INK, bold=True,
                      line=LINE["card"])
-            _textbox(s, x + pad, top + pad + th + 12, inner, hgt - 2 * pad - th - 12, list(card.get("body", [])),
+            _textbox(s, cx + pad, y + pad + th + 12, inner, hgt - 2 * pad - th - 12, list(card.get("body", [])),
                      SIZE["card_body"], TEXT, line=LINE["card"], bullets=True, gap_after=10)
+        return hgt
+
+    def cards(self, title, subtitle="", cards=(), key="", notes=""):
+        """카드 2–3 개 — cards: [{"title": 영어 소제목, "body": [불릿, …]}]. 카드 높이는 가장 긴 카드에 맞춘다."""
+        s, top, bottom = self._start(title, subtitle, key)
+        self._cards_row(s, MX, top, CW, bottom - top, cards, self._page[s.slide_id])
+        self._finish(s, notes)
+
+    def equation(self, title, subtitle="", eq="", where="", image="", label="", caption="", cards=(), bullets=(),
+                 key="", notes=""):
+        """수식 장 — 위에 전체 폭 회색 수식 박스 (식은 가운데·원래 크기, 번호 없음, 아래 where 한 문장),
+        그 아래 왼쪽 그림 + 오른쪽 카드 (또는 불릿). 그림이 없으면 카드·불릿이 전체 폭을 쓴다.
+        eq: tools/equations.py 로 만든 PNG 경로, 또는 LaTeX 글 (여러 줄은 리스트, 맞출 자리에 &) — 글이면 그 자리에서 만든다."""
+        s, top, bottom = self._start(title, subtitle, key)
+        page = self._page[s.slide_id]
+        png = _equation_png(eq)
+        with Image.open(png) as im:
+            (iw, ih), dpi = im.size, (im.info.get("dpi") or (600, 600))[0]
+        ew, eh = iw / dpi * 144, ih / dpi * 144            # 그림의 실제 크기 (in) → 캔버스 px (1 in = 144 px)
+        pad = 36
+        room = CW - 2 * pad
+        if ew > room:
+            self._warn(page, "식이 박스보다 넓음 — 줄을 나눔")
+            ew, eh = room, eh * room / ew
+        wn = _lines(where, SIZE["card_body"], room) if where else 0
+        if wn > 2:
+            self._warn(page, "where 가 2 줄을 넘음 — 줄이거나 노트로")
+        wh = wn * SIZE["card_body"] * LINE["card"]
+        box_h = 2 * pad + eh + (16 + wh if where else 0)
+        _rect(s, MX, top, CW, box_h, CARD_FILL, CARD_LINE, radius=8)
+        _picture(s, png, MX + (CW - ew) / 2, top + pad, ew, eh, "equation")
+        if where:
+            _textbox(s, MX + pad, top + pad + eh + 16, room, wh, where, SIZE["card_body"], GREY, line=LINE["card"],
+                     align=PP_ALIGN.CENTER)
+        y = top + box_h + 40
+        if (image or cards or bullets) and bottom - y < 120:
+            self._warn(page, "수식 박스 아래 자리가 모자람 — 그림·카드를 줄이거나 장을 나눔")
+        elif image or cards or bullets:
+            x, w = MX, CW
+            if image:
+                pw = self._figure(s, MX, y, CW * 0.45, bottom - y, {"image": image, "label": label, "caption": caption},
+                                  page)
+                x = MX + pw + 64
+                w = MX + CW - x
+            if cards:
+                self._cards_row(s, x, y, w, bottom - y, cards, page)
+            elif bullets:
+                _textbox(s, x, y, w, bottom - y, list(bullets), SIZE["body"], TEXT, line=LINE["body"], bullets=True,
+                         gap_after=16)
         self._finish(s, notes)
 
     def table(self, title, subtitle="", header=(), rows=(), widths=None, key="", notes="", width=None):

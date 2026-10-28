@@ -42,12 +42,14 @@
 
 ## 4. 만드는 순서
 
+0. 준비 — 이 PC 에서 처음이면 `python check_setup.py` (빠진 것은 안내대로 설치).
 1. 묻는다 — 청중, 발표 시간, 핵심 주장 한 문장, 쓸 수 있는 자료 (그림·숫자, 측정인지 sim 인지).
 2. 스토리보드 — 장마다 제목·부제·그림·빨간 줄을 표로 쓰고 합의한다.
 3. 그림 — figstyle 로 그린다. 새 그림은 후보 (무엇을 보이나·자료·수고) 와 추천을 먼저 내고 합의한 뒤에.
-4. 장 만들기 — `tools/simple_pt.py`. 노트에 말할 대본을 쓴다.
-5. 검수 — save() 경고 0, `rules/checklist.md`, PowerPoint 로 열어 장마다 본다.
-6. 제출본 — 노트를 지운 판 (`tools/fix_pptx.py --strip-notes`).
+4. 식 — `rules/equations.md` (IEEE 표기, `tools/equations.py`).
+5. 장 만들기 — `tools/simple_pt.py`. 노트에 말할 대본을 쓴다.
+6. 검수 — save() 경고 0, `rules/checklist.md`, PowerPoint (또는 LibreOffice) 로 장마다 본다.
+7. 제출본 — 노트를 지운 판 (`tools/fix_pptx.py --strip-notes`).
 
 ## 5. 고칠 때
 

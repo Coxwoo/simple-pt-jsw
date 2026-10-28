@@ -1,0 +1,8 @@
+# simple-pt — `python check_setup.py --install` 이 이 목록을 설치한다
+python-pptx>=1.0
+Pillow>=9.0
+lxml>=4.9
+matplotlib>=3.7
+numpy>=1.24
+# 시험한 판: Python 3.13, python-pptx 1.0.2, Pillow 11.3, matplotlib 3.11, numpy 2.2
+# 선택: sympy>=1.12 (식 검산 — rules/equations.md 5 절)

@@ -10,9 +10,14 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent / "tools"))
+from equations import render  # noqa: E402
 from simple_pt import Deck  # noqa: E402
 
 sys.stdout.reconfigure(encoding="utf-8")         # Windows 콘솔에서도 한글 경고가 깨지지 않게
+
+# 식은 tools/equations.py 로 — example/equations/noise.png·.svg·.tex (여러 줄은 & 자리에 맞춘다)
+NOISE_EQ = render([r"\overline{v_{\mathrm{n}}^{2}} &= \frac{4kT\gamma}{g_{\mathrm{m}}}",
+                   r"g_{\mathrm{m}} &= \frac{2I_{\mathrm{D}}}{V_{\mathrm{ov}}}"], HERE / "equations" / "noise")
 
 
 def fig(name):
@@ -47,13 +52,15 @@ d.figure_bullets("Design Target", "입력 환산 잡음 10 nV/√Hz 이하, 전�
                  notes="목표는 잡음 10 nV/√Hz 이하, 전력 200 µW 이하입니다.\n"
                        "입력단 전류를 늘리면 잡음은 줄지만 전력이 늘어서, 두 목표를 함께 만족하는 150 µA 를 골랐습니다.")
 
-d.cards("Key Idea", "입력단에만 전류 집중 — 출력단은 최소 전류 유지",
-        cards=[{"title": "Input stage", "body": ["전류 1.5 배·소자 2 배", "g_{m} 증가로 잡음 감소"]},
-               {"title": "Output stage", "body": ["전류 30 µA 그대로", "구동 능력만 유지"]},
-               {"title": "Net effect", "body": ["전력 128 → 180 µW (+40 %)", "잡음 13 → 8.5 nV/√Hz (−35 %)"]}],
-        key="전력 +40 % 로 잡음 −35 % — 전류는 필요한 곳에만 사용",
-        notes="핵심은 전류를 잡음을 정하는 입력단에만 쓰는 것입니다.\n"
-              "출력단은 그대로 두어서, 전력은 40 % 늘고 잡음은 35 % 줄었습니다.")
+d.equation("Key Idea", "입력단 전류로 g_{m} 을 키워 잡음 감소 — 출력단은 최소 전류 유지",
+           eq=NOISE_EQ,
+           where="k 볼츠만 상수, T 절대 온도, γ 잡음 계수, V_{ov} overdrive 전압",
+           cards=[{"title": "Input stage", "body": ["전류 1.5 배·소자 2 배", "g_{m} 증가로 잡음 감소"]},
+                  {"title": "Output stage", "body": ["전류 30 µA 그대로", "구동 능력만 유지"]},
+                  {"title": "Net effect", "body": ["전력 128 → 180 µW (+40 %)", "잡음 13 → 8.5 nV/√Hz (−35 %)"]}],
+           key="전력 +40 % 로 잡음 −35 % — 전류는 필요한 곳에만 사용",
+           notes="잡음은 입력 소자의 g_m 에 반비례하고, g_m 은 전류에 비례합니다.\n"
+                 "그래서 전류를 입력단에만 쓰고 출력단은 그대로 두었습니다. 전력은 40 % 늘고 잡음은 35 % 줄었습니다.")
 
 d.panels("Robustness", "온도·공정·부하가 바뀌어도 이득·잡음·안정도 목표 이내",
          panels=[{"label": "Temperature", "image": fig("gain_vs_temp"),
