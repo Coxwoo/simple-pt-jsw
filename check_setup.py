@@ -1,9 +1,10 @@
-"""처음 쓰는 PC 에서 simple-pt 에 필요한 것을 확인한다 — Python 패키지, 글꼴, figstyle, 장을 그림으로 보는 도구.
+"""처음 쓰는 PC 에서 simple-pt 에 필요한 것을 확인한다 — Python 패키지, Node.js·MathJax (식), 글꼴, figstyle, 장을 그림으로 보는 도구.
 
     python check_setup.py              # 확인만 한다
-    python check_setup.py --install    # 빠진 Python 패키지를 설치하고 (requirements.txt) matplotlib 글꼴 목록을 새로 만든다
+    python check_setup.py --install    # 빠진 Python 패키지 (requirements.txt) 와 MathJax (tools/mathjax 에서 npm ci) 를 설치하고
+                                       # matplotlib 글꼴 목록을 새로 만든다
 
-글꼴은 자동으로 설치하지 않는다 — 아래 안내 (공식 배포처) 대로 설치한 뒤 --install 로 글꼴 목록을 새로 만들고 다시 확인한다.
+Node.js 와 글꼴은 자동으로 설치하지 않는다 — 아래 안내 (공식 배포처) 대로 설치한 뒤 --install 로 마저 하고 다시 확인한다.
 끝 코드: 꼭 필요한 것이 모두 있으면 0, 아니면 1.
 """
 import argparse
@@ -19,10 +20,15 @@ PACKAGES = [  # (import 이름, pip 이름, 최소 판, 쓰는 곳)
     ("pptx", "python-pptx", "1.0", "pptx 만들기 (tools/simple_pt.py)"),
     ("PIL", "Pillow", "9.0", "그림 크기 읽기"),
     ("lxml", "lxml", "4.9", "pptx 속 XML"),
-    ("matplotlib", "matplotlib", "3.7", "식 그림 (tools/equations.py), 그래프 (figstyle)"),
+    ("matplotlib", "matplotlib", "3.7", "그래프 (figstyle), 글꼴 확인"),
     ("numpy", "numpy", "1.24", "그래프 (figstyle)"),
+    ("pymupdf", "pymupdf", "1.24.3", "식 PNG (tools/equations.py)"),
 ]
 OPTIONAL = [("sympy", "sympy", "1.12", "식 검산 (선택)")]
+NODE_MIN = 18
+MATHJAX = HERE / "tools" / "mathjax"
+NODE_HELP = ("https://nodejs.org 의 LTS 판 — Windows: winget install OpenJS.NodeJS.LTS, macOS: brew install node, "
+             "Linux: 배포판 패키지 (nodejs·npm). 설치한 뒤 python check_setup.py --install")
 FONTS = [  # (글꼴, 꼭 필요한가, 쓰는 곳, 없을 때)
     ("Arial", True, "슬라이드·그래프의 영문", "비슷한 글꼴로 바뀌어 글 폭이 달라진다"),
     ("Arial Narrow", False, "그래프 안 글자 (figstyle)", "Arial 로 대신 — 그래프 안 글자가 조금 넓어진다"),
@@ -95,6 +101,28 @@ def check_fonts():
     return rows, missing_required, stale
 
 
+def check_mathjax():
+    """식 그림 — Node.js (18 이상) 와 tools/mathjax 의 MathJax (npm ci). 돌려주는 것: 줄들, node 가 되나, MathJax 가 있나."""
+    node = shutil.which("node")
+    if not node:
+        return [(NO, "Node.js", "식 (MathJax) — 없음")], False, False
+    ver = subprocess.run([node, "--version"], capture_output=True, text=True).stdout.strip().lstrip("v")
+    good = _version_ok(ver, str(NODE_MIN))
+    rows = [(OK if good else NO, f"Node.js {ver}", "식 (MathJax)" + ("" if good else f" — {NODE_MIN} 이상 필요"))]
+    have = (MATHJAX / "node_modules" / "mathjax-full").is_dir()
+    rows.append((OK if have else NO, "MathJax 3.2.2", "tools/mathjax" + ("" if have else " — 설치 안 됨 (npm ci)")))
+    return rows, good, have
+
+
+def install_mathjax():
+    npm = shutil.which("npm")
+    if not npm:
+        print("  npm 이 없다 — Node.js 를 다시 설치한다")
+        return
+    print("\n설치: MathJax (tools/mathjax 에서 npm ci)")
+    subprocess.run([npm, "ci", "--no-audit", "--no-fund"], cwd=MATHJAX, check=False)
+
+
 def check_figstyle():
     for place in FIGSTYLE_PLACES:
         if (place / "figstyle.py").is_file():
@@ -143,6 +171,10 @@ def main():
         subprocess.run([sys.executable, "-m", "pip", "install", "-r", str(HERE / "requirements.txt")], check=False)
         importlib.invalidate_caches()
         rows, missing = check_packages(PACKAGES)
+    mj_rows, node_ok, mj_ok = check_mathjax()
+    if args.install and node_ok and not mj_ok:
+        install_mathjax()
+        mj_rows, node_ok, mj_ok = check_mathjax()
     font_rows, missing_fonts, stale = check_fonts()
     if args.install and stale:
         refresh_font_cache()
@@ -150,6 +182,9 @@ def main():
 
     print("\n[Python 패키지]")
     for mark, what, note in rows + opt_rows:
+        print(f"  {mark} {what:<22} {note}")
+    print("\n[식 — MathJax]")
+    for mark, what, note in mj_rows:
         print(f"  {mark} {what:<22} {note}")
     print("\n[글꼴]")
     for mark, what, note in font_rows:
@@ -161,12 +196,16 @@ def main():
     todo = []
     if missing:
         todo.append("python check_setup.py --install   # Python 패키지 설치")
+    if not node_ok:
+        todo.append(f"Node.js: {NODE_HELP}")
+    elif not mj_ok:
+        todo.append("python check_setup.py --install   # MathJax 설치 (tools/mathjax 에서 npm ci)")
     for name in missing_fonts + [r[1] for r in font_rows if r[0] == SOSO and r[1] in FONT_HELP]:
         todo.append(f"{name}: {FONT_HELP[name]}")
     if stale:
         todo.append("글꼴을 설치했으면: python check_setup.py --install   # matplotlib 글꼴 목록 새로 만들기")
     print("\n" + ("할 일:\n  - " + "\n  - ".join(dict.fromkeys(todo)) if todo else "모두 준비됨"))
-    sys.exit(1 if (missing or missing_fonts or sys.version_info < (3, 9)) else 0)
+    sys.exit(1 if (missing or missing_fonts or not (node_ok and mj_ok) or sys.version_info < (3, 9)) else 0)
 
 
 if __name__ == "__main__":

@@ -10,8 +10,8 @@ description: 발표 자료 (PT·슬라이드·pptx) 를 "Simple is best" 양식�
 ## 0. 준비 — 이 PC 에서 처음이면
 
 1. `python <이 skill 폴더>/check_setup.py` 를 돌린다.
-2. 빠진 Python 패키지가 있으면 사용자에게 한 줄 알리고 `python <이 skill 폴더>/check_setup.py --install`.
-3. 빠진 글꼴 (Noto Sans KR 등) 은 스크립트가 알려 주는 공식 배포처 안내를 사용자에게 보여 주고, 사용자 확인 뒤 설치를 돕는다. 설치한 뒤 `--install` 로 matplotlib 글꼴 목록을 새로 만들고 다시 확인한다.
+2. 빠진 Python 패키지·MathJax 가 있으면 사용자에게 한 줄 알리고 `python <이 skill 폴더>/check_setup.py --install` (pip 설치와 `tools/mathjax` 의 `npm ci`).
+3. 빠진 Node.js·글꼴 (Noto Sans KR 등) 은 스크립트가 알려 주는 공식 배포처 안내를 사용자에게 보여 주고, 사용자 확인 뒤 설치를 돕는다. 설치한 뒤 `--install` 로 마저 하고 (MathJax, matplotlib 글꼴 목록) 다시 확인한다.
 4. figstyle skill 이 없으면 받게 안내한다: `git clone https://github.com/Coxwoo/figstyle-jsw.git ~/.claude/skills/figstyle`.
 5. 다 갖추지 못해도 만들 수는 있다 — 무엇이 달라지는지 (글꼴이 바뀌어 모양·줄바꿈이 달라짐) 사용자에게 알린다.
 
@@ -20,7 +20,7 @@ description: 발표 자료 (PT·슬라이드·pptx) 를 "Simple is best" 양식�
 1. 묻는다 — 청중, 발표 시간 (분), 핵심 주장 한 문장, 쓸 자료 (그림·숫자, 측정인지 sim 인지). 모르는 숫자는 지어내지 않는다.
 2. `rules/structure.md`·`rules/writing.md` 를 읽고 스토리보드를 표로 낸다 — 장마다 제목 (영어 2–4 단어)·부제 (결론 한 문장)·그림·빨간 줄, 그리고 Appendix 질문 목록. 합의한 뒤에 만든다.
 3. 그래프는 figstyle skill 로 그린다. 새 그림은 후보와 추천을 먼저 내고 합의한 뒤에.
-4. 식은 `rules/equations.md` 대로 — IEEE 표기로 LaTeX 를 쓰고 `tools/equations.py` 로 그림을 만든다 (또는 `d.equation()` 에 LaTeX 를 바로 준다).
+4. 식은 `rules/equations.md` 대로 — IEEE 표기로 LaTeX 를 쓰고 `tools/equations.py` (MathJax) 로 그림을 만든다 (또는 `d.equation()` 에 LaTeX 를 바로 준다).
 5. 장을 만든다 — `example/make_example.py` 를 본보기로:
 
    ```python

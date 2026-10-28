@@ -47,7 +47,7 @@
 | 카드 소제목 / 카드 본문 | 16 / 32, 14 / 28 | Bold #111111 / #1F1F1F | 1.4 |
 | 표 | 14 / 28 | 머리 줄 Bold, #1F1F1F | 1.3 |
 | 캡션 | 12 / 24 | #4A4A4A | 1.4 |
-| 식 | 16 pt 상당 (원래 크기) | Computer Modern, `tools/equations.py` | — |
+| 식 | 16 pt 상당 (IEEE 본문 10 pt 의 1.6 배) | MathJax (TeX 글꼴), `tools/equations.py` | — |
 | 식 아래 where | 14 / 28 | #4A4A4A, 가운데 | 1.4 |
 | 빨간 줄 (결론 숫자) | 17 / 34 | Bold #B4161E | 1.3 |
 | 쪽 번호 | 12 / 24 | #767676 | — |

@@ -34,7 +34,7 @@
 | `rules/equations.md` | 식 — IEEE 표기, 만들기, 슬라이드에 넣기, 검산 |
 | `rules/checklist.md` | 검수 목록 |
 | `tools/simple_pt.py` | pptx 를 만드는 모듈 — 디자인 값의 정본 |
-| `tools/equations.py` | LaTeX 식 → PNG·SVG·TeX (Computer Modern) |
+| `tools/equations.py`, `tools/mathjax/` | LaTeX 식 → SVG·PNG·TeX (MathJax 3.2.2) |
 | `tools/fix_pptx.py` | 다른 도구로 만든 pptx 의 후처리 — 한글 글꼴·줄바꿈·아래 첨자·노트 지우기 |
 | `example/` | 예시 덱 — `make_example.py`, `demo_amp.pptx`, 그림, 식, 미리보기 |
 
@@ -45,7 +45,8 @@ python check_setup.py              # 무엇이 있고 무엇이 빠졌는지
 python check_setup.py --install    # 빠진 Python 패키지 설치 + matplotlib 글꼴 목록 새로 만들기
 ```
 
-- Python 3.9 이상. 패키지는 `requirements.txt` (python-pptx, Pillow, lxml, matplotlib, numpy).
+- Python 3.9 이상. 패키지는 `requirements.txt` (python-pptx, Pillow, lxml, matplotlib, numpy, PyMuPDF).
+- 식에는 Node.js (LTS, [nodejs.org](https://nodejs.org)) — `--install` 이 `tools/mathjax` 에 MathJax 3.2.2 를 받는다 (`npm ci`).
 - 글꼴: Arial (영문), Noto Sans KR (한글 — [Google Fonts](https://fonts.google.com/noto/specimen/Noto+Sans+KR) 에서 static 판), Arial Narrow (그래프 안 글자 — Office 와 함께). 없으면 다른 글꼴로 바뀌어 모양·줄바꿈이 달라진다.
 - 장을 그림으로 확인하려면 PowerPoint (Windows) 나 LibreOffice.
 
@@ -87,11 +88,12 @@ d.save("my_talk.pptx")                  # 규칙에 어긋난 곳은 경고로 �
 ## 6. 식
 
 ```bash
-python tools/equations.py "A_{v} = g_{\mathrm{m}} R_{\mathrm{L}}" -o figures/eq/gain     # PNG·SVG·TeX
+python tools/equations.py "A_{v} = g_{\mathrm{m}} R_{\mathrm{L}}" -o figures/eq/gain     # SVG·PNG·TeX
 ```
 
-- 슬라이드에는 `d.equation(...)` — 회색 수식 박스 가운데, 번호 없음, 아래 where 한 문장. 여러 줄은 맞출 자리에 `&`.
-- IEEE 표기와 되는·안 되는 LaTeX 는 `rules/equations.md`.
+- 엔진은 MathJax 3 (3.2.2 로 고정) — 글꼴 없이 어느 PC 에서나 같은 그림. SVG 는 IEEE 본문 10 pt, PNG 는 슬라이드용 1.6 배.
+- 슬라이드에는 `d.equation(...)` — 회색 수식 박스 가운데, 번호 없음, 아래 where 한 문장. 여러 줄은 맞출 자리에 `&` (aligned).
+- IEEE 표기와 자세한 쓰는 법은 `rules/equations.md`.
 
 ## 7. 규칙 한눈에
 

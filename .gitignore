@@ -5,3 +5,4 @@ Thumbs.db
 ~$*.pptx
 *_fixed.pptx
 *_submit.pptx
+node_modules/

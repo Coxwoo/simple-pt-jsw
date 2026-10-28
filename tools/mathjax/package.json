@@ -1,0 +1,8 @@
+{
+  "name": "simple-pt-mathjax",
+  "private": true,
+  "description": "TeX to SVG (MathJax 3) for simple-pt - called by tools/equations.py",
+  "dependencies": {
+    "mathjax-full": "3.2.2"
+  }
+}
