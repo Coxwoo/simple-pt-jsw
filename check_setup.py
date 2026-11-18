@@ -33,10 +33,12 @@ FONTS = [  # (글꼴, 꼭 필요한가, 쓰는 곳, 없을 때)
     ("Arial", True, "슬라이드·그래프의 영문", "비슷한 글꼴로 바뀌어 글 폭이 달라진다"),
     ("Arial Narrow", False, "그래프 안 글자 (figstyle)", "Arial 로 대신 — 그래프 안 글자가 조금 넓어진다"),
     ("Noto Sans KR", True, "슬라이드의 한글", "맑은 고딕 등으로 바뀌어 모양·줄바꿈이 달라진다"),
+    ("Times New Roman", False, "글 속 τ 한 글자 (기울임)", "다른 세리프 글꼴로 바뀐다 — τ 모양만 조금 다르다"),
 ]
 FONT_HELP = {
     "Arial": "Windows·macOS 에 기본으로 있다. Linux 는 같은 폭의 대체 글꼴: sudo apt install fonts-liberation",
     "Arial Narrow": "Microsoft Office 와 함께 설치된다. Linux 는 fonts-liberation 의 Liberation Sans Narrow",
+    "Times New Roman": "Windows·macOS 에 기본으로 있다. Linux 는 fonts-liberation 의 Liberation Serif",
     "Noto Sans KR": ("https://fonts.google.com/noto/specimen/Noto+Sans+KR → Get font → Download all → "
                      "압축 속 static/ 의 NotoSansKR-Regular.ttf·NotoSansKR-Bold.ttf 를 설치 "
                      "(Windows: 오른쪽 클릭 → 설치, macOS: 서체 관리자, Linux: ~/.local/share/fonts 에 복사 후 fc-cache -f)"),
